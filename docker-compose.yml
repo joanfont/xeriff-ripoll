@@ -1,0 +1,11 @@
+version: '3.7'
+services:
+  app:
+    image: joanfont/xeriff-ripoll
+    build: .
+    user: 1000:1000
+    env_file:
+      - .env.sample
+      - .env
+    volumes:
+      - .:/code/
