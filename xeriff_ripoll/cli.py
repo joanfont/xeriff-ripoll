@@ -43,6 +43,18 @@ def tweet():
     action.execute()
 
 
+@cli.command()
+def export():
+   action = actions.ExportAllLyrics()
+   action.execute()
+
+
+@cli.command(name='import')
+def _import():
+   action = actions.ImportAllLyrics()
+   action.execute()
+
+
 def print_song(song, with_lyrics=True):
     print(f'Title: {song.title}')
     print(f'URL: {song.url}')

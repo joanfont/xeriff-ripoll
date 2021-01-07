@@ -1,6 +1,9 @@
+import os
+
 from xeriff_ripoll.config import config
 from xeriff_ripoll.entities import SongBuilder, Song
 from xeriff_ripoll.extractor import LyricExtractor
+from xeriff_ripoll.filesystem import Filesystem
 from xeriff_ripoll.parser import LyricParser
 from xeriff_ripoll.processors import LyricCleaner
 from xeriff_ripoll.repository import FilesystemLyricRepository, LyricRepository
@@ -81,3 +84,42 @@ class TweetRandomExcerpt:
     def execute(self):
         random_song_with_excerpt = self.get_random_song_with_excerpt.execute()
         self.twitter_client.post(random_song_with_excerpt.excerpt)
+
+
+class ExportAllLyrics:
+
+    def __init__(self, lyric_repository: LyricRepository=None, filesystem: Filesystem=None):
+        self.lyric_repository = lyric_repository or FilesystemLyricRepository(config.LYRICS_PATH)
+        self.filesystem = filesystem or Filesystem()
+
+    def execute(self):
+        all_songs = self.lyric_repository.get_all()
+        for song in all_songs:
+            lyrics_path = self._get_lyrics_path(song)
+            self.filesystem.write(lyrics_path, 'w', song.lyrics)
+
+    def _get_lyrics_path(self, song):
+        return os.path.join(
+            config.LYRICS_PATH,
+            f'{song.id}.txt'
+        )
+
+class ImportAllLyrics:
+
+    def __init__(self, lyric_repository: LyricRepository=None, filesystem: Filesystem=None):
+        self.lyric_repository = lyric_repository or FilesystemLyricRepository(config.LYRICS_PATH)
+        self.filesystem = filesystem or Filesystem()
+
+    def execute(self):
+        all_songs = self.lyric_repository.get_all()
+        for song in all_songs:
+            lyrics_path = self._get_lyrics_path(song)
+            lyrics = self.filesystem.read(lyrics_path, 'r')
+            song.lyrics = lyrics
+            self.lyric_repository.save(song)
+
+    def _get_lyrics_path(self, song):
+        return os.path.join(
+            config.LYRICS_PATH,
+            f'{song.id}.txt'
+        )

@@ -4,6 +4,7 @@ import json
 import os
 import random
 
+from xeriff_ripoll.filesystem import Filesystem
 from xeriff_ripoll.entities import SongBuilder, Song
 
 
@@ -11,6 +12,10 @@ class LyricRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def save(self, song) -> Song:
+        pass
+
+    @abstractmethod
+    def get_all(self) -> list[Song]:
         pass
 
     @abstractmethod
@@ -23,8 +28,9 @@ class LyricRepository(metaclass=ABCMeta):
 
 class FilesystemLyricRepository(LyricRepository):
 
-    def __init__(self, base_path: str, song_builder: SongBuilder=None):
+    def __init__(self, base_path: str, filesystem: Filesystem=None, song_builder: SongBuilder=None):
         self.base_path = base_path
+        self.filesystem = filesystem or Filesystem()
         self.song_builder = song_builder or SongBuilder()
 
     def save(self, song) -> Song:
@@ -36,10 +42,12 @@ class FilesystemLyricRepository(LyricRepository):
         }
 
         file_name = self._get_file_name(song.id)
-        with open(file_name, 'w') as f:
-            f.write(json.dumps(data, indent=4))
-
+        self.filesystem.write(file_name, 'w', json.dumps(data, indent=4))
         return song
+
+    def get_all(self) -> list[Song]:
+        all_songs = self._get_all_songs()
+        return list(map(self._get_song_by_file, all_songs))
 
     def get_by_song_id(self, song_id) -> Song:
         file_name = self._get_file_name(song_id)
@@ -49,14 +57,16 @@ class FilesystemLyricRepository(LyricRepository):
         random_song_file = self._get_random_song_file()
         return self._get_song_by_file(random_song_file)
 
+    def _get_all_songs(self) -> list[str]:
+        all_songs_path = self._get_file_name('*')
+        return glob.glob(all_songs_path)
+
     def _get_random_song_file(self) -> str:
-        songs_path = self._get_file_name('*')
-        available_songs = glob.glob(songs_path)
-        return random.choice(available_songs)
+        all_songs = self._get_all_songs()
+        return random.choice(all_songs)
 
     def _get_song_by_file(self, file_path) -> Song:
-        with open(file_path, 'r') as f:
-            song = json.loads(f.read())
+        song = json.loads(self.filesystem.read(file_path, 'r'))
 
         return self.song_builder \
             .with_id(song['id']) \
