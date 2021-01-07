@@ -8,6 +8,10 @@ class Config:
         return decouple.config('LYRICS_PATH')
 
     @property
+    def EXCERPT_MAX_LENGTH(self) -> int:
+        return decouple.config('EXCERPT_MAX_LENGTH', cast=int, default=280)
+
+    @property
     def TWITTER_API_KEY(self) -> str:
         return decouple.config('TWITTER_API_KEY')
 
