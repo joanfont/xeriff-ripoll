@@ -4,37 +4,26 @@ from xeriff_ripoll.config import config
 
 class LyricExtractor:
 
-    def __init__(self, max_length: int=None):
-        self.max_length = max_length or config.EXCERPT_MAX_LENGTH
+    def __init__(self, max_lines_per_paragraph: int=None):
+        self.max_lines_per_paragraph = max_lines_per_paragraph or config.EXCERPT_MAX_LINES_PER_PARAGRAPH
 
     def execute(self, lyrics: str) -> str:
         lyric_paragraphs = lyrics.split("\n\n")
 
         candidate_paragraph = random.choice(lyric_paragraphs)
-        if len(candidate_paragraph) <= self.max_length:
-            return candidate_paragraph
+        paragraph_lines = candidate_paragraph.split("\n")
 
-        return self._shorten_paragraph(candidate_paragraph)
+        candidate_paragraph = paragraph_lines
+        if len(paragraph_lines) > self.max_lines_per_paragraph:
+            candidate_paragraph = self._shorten_paragraph(candidate_paragraph)
 
-    def _shorten_paragraph(self, paragraph: str) -> str:
-        lines = paragraph.split("\n")
+        return "\n".join(map(lambda p: p.capitalize(), candidate_paragraph))
 
-        must_reverse = random.randint(0, 1)
-        if must_reverse:
-            lines = reversed(lines)
 
-        shortened_paragraph = []
-        shortened_paragraph_length = 0
-        for line in lines:
-            line_length = len(line)
-            if shortened_paragraph_length + line_length > self.max_length:
-                break
+    def _shorten_paragraph(self, paragraph: list) -> list:
+        line_count = len(paragraph)
+        start_index = random.randint(0, line_count - self.max_lines_per_paragraph)
+        end_index = start_index + self.max_lines_per_paragraph
 
-            shortened_paragraph.append(line)
-            shortened_paragraph_length += line_length
-
-        if must_reverse:
-            shortened_paragraph = reversed(shortened_paragraph)
-
-        return "\n".join(shortened_paragraph)
+        return paragraph[start_index:end_index]
 
