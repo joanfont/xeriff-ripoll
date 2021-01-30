@@ -13,11 +13,10 @@ class LyricExtractor:
         candidate_paragraph = random.choice(lyric_paragraphs)
         paragraph_lines = candidate_paragraph.split("\n")
 
-        candidate_paragraph = paragraph_lines
         if len(paragraph_lines) > self.max_lines_per_paragraph:
-            candidate_paragraph = self._shorten_paragraph(candidate_paragraph)
+            paragraph_lines = self._shorten_paragraph(paragraph_lines)
 
-        return "\n".join(map(lambda p: p.capitalize(), candidate_paragraph))
+        return "\n".join(map(lambda p: p.capitalize(), paragraph_lines))
 
 
     def _shorten_paragraph(self, paragraph: list) -> list:
